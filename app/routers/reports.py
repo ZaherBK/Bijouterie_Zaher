@@ -5,6 +5,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.services.payroll import PayrollService
+from app.deps import web_require_permission
 import openpyxl
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 
@@ -18,11 +19,19 @@ async def export_payroll(
     start_date: date = Query(None),
     end_date: date = Query(None),
     branch_id: int = Query(None),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(web_require_permission("can_manage_employees"))
 ):
     """
     Generate and download Global Payroll Excel Report.
+    Security: Non-admins are restricted to their own branch.
     """
+    # --- Security Check ---
+    permissions = user.get("permissions", {})
+    if not permissions.get("is_admin"):
+        # Force the user's branch
+        branch_id = user.get("branch_id")
+    
     if not start_date:
         today = date.today()
         start_date = today.replace(day=1)
