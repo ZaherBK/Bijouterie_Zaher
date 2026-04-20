@@ -240,6 +240,17 @@ def get_unsynced_data(token):
     except Exception as e:
         print(f"[{datetime.now():%H:%M:%S}] Error fetching expenses: {e}")
 
+    # Fetch Payments
+    try:
+        resp = requests.get(f"{CLOUD_API_URL}/api/pay/", headers=headers, timeout=30)
+        if resp.status_code == 200:
+            all_payments = resp.json()
+            payments = [p for p in all_payments if p.get('date') and p.get('date') >= start_date_str]
+        else:
+            print(f"[{datetime.now():%H:%M:%S}] [ERROR] Payments API Error: {resp.status_code} {resp.text}")
+    except Exception as e:
+        print(f"[{datetime.now():%H:%M:%S}] Error fetching payments: {e}")
+
     # Fetch Loans (New)
     try:
         resp = requests.get(f"{CLOUD_API_URL}/api/loans/", headers=headers, timeout=30)
@@ -264,6 +275,7 @@ def sync_to_local_mysql(token, deposits, expenses, payments, loans, db_schema, d
     involved_dates = set()
     for item in deposits: involved_dates.add(item.get('date'))
     for item in expenses: involved_dates.add(item.get('date'))
+    for item in payments: involved_dates.add(item.get('date'))
     for item in loans: involved_dates.add(item.get('start_date'))
     
     involved_dates.discard(None) # Remove None if any
@@ -312,6 +324,7 @@ def sync_to_local_mysql(token, deposits, expenses, payments, loans, db_schema, d
             all_items = []
             for d in deposits: all_items.append({'type': 'deposit', 'date': d['date'], 'data': d})
             for e in expenses: all_items.append({'type': 'expense', 'date': e['date'], 'data': e})
+            for p in payments: all_items.append({'type': 'payment', 'date': p['date'], 'data': p})
             for l in loans: all_items.append({'type': 'loan', 'date': l['start_date'], 'data': l})
             
             all_items.sort(key=lambda x: x['date'])
@@ -338,6 +351,14 @@ def sync_to_local_mysql(token, deposits, expenses, payments, loans, db_schema, d
                     lib_dep = f"{emp_name} - {note}"
                     amount = float(data['principal'])
                     coddep = CODDEP_DEPOSITS
+                elif itype == 'payment':
+                    emp = data.get('employee') or {}
+                    emp_name = f"{emp.get('first_name', '')} {emp.get('last_name', '')}".strip()
+                    note = data.get('note', '') or ''
+                    pay_type = data.get('pay_type', '')      
+                    lib_dep = f"{emp_name} - {pay_type} {note}".strip()
+                    amount = float(data['amount'])
+                    coddep = CODDEP_EXPENSES
 
                 lib_dep = lib_dep[:45]
                 date_str = str(item['date'])
