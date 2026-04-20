@@ -45,6 +45,7 @@ async def create_deposit(
 
 @router.get("/", response_model=List[DepositOut])
 async def list_deposits(
+    branch_id: int | None = None,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(api_current_user)
 ):
@@ -55,6 +56,9 @@ async def list_deposits(
     if not user.permissions.is_admin:
         # Filter by branch via Employee relation
         query = query.join(Employee).where(Employee.branch_id == user.branch_id)
+    else:
+        if branch_id:
+            query = query.join(Employee).where(Employee.branch_id == branch_id)
         
     res = await db.execute(query)
     return res.scalars().all()

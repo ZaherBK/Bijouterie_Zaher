@@ -45,6 +45,7 @@ async def _check_eligibility(db: AsyncSession, employee_id: int, amount_per_term
 async def list_loans(
     status: LoanStatus | None = None, 
     employee_id: int | None = None, 
+    branch_id: int | None = None,
     db: AsyncSession = Depends(get_db),
     user = Depends(api_current_user) # Changed to allow basic access (filtered)
 ):
@@ -57,16 +58,11 @@ async def list_loans(
 
     if not is_admin:
         # Filter by user's branch
-        branch_id = user.branch_id
-        q = q.join(Employee).where(Employee.branch_id == branch_id)
-
-    if status:
-        q = q.where(Loan.status == status)
-    if employee_id:
-        q = q.where(Loan.employee_id == employee_id)
-    q = q.order_by(Loan.created_at.desc())
-    res = await db.execute(q)
-    return res.scalars().all()
+        user_branch_id = user.branch_id
+        q = q.join(Employee).where(Employee.branch_id == user_branch_id)
+    else:
+        if branch_id:
+            q = q.join(Employee).where(Employee.branch_id == branch_id)
 
     if status:
         q = q.where(Loan.status == status)

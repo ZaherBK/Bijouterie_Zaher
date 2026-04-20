@@ -211,6 +211,14 @@ def get_unsynced_data(token):
     start_date_obj = today - timedelta(days=30)
     start_date_str = start_date_obj.isoformat()
     
+    # Enforce strict branch isolation based on CLOUD_EMAIL
+    email_lower = CLOUD_EMAIL.lower()
+    branch_query = ""
+    if "issam" in email_lower:
+        branch_query = "?branch_id=1"
+    elif "zied" in email_lower:
+        branch_query = "?branch_id=2"
+    
     deposits = []
     expenses = []
     payments = []
@@ -218,7 +226,7 @@ def get_unsynced_data(token):
     
     # Fetch Deposits
     try:
-        resp = requests.get(f"{CLOUD_API_URL}/api/deposits/", headers=headers, timeout=30)
+        resp = requests.get(f"{CLOUD_API_URL}/api/deposits/{branch_query}", headers=headers, timeout=30)
         if resp.status_code == 200:
             all_deposits = resp.json()
             # MODIFIED: Check last 30 days
@@ -230,7 +238,7 @@ def get_unsynced_data(token):
     
     # Fetch Expenses
     try:
-        resp = requests.get(f"{CLOUD_API_URL}/api/expenses/", headers=headers, timeout=30)
+        resp = requests.get(f"{CLOUD_API_URL}/api/expenses/{branch_query}", headers=headers, timeout=30)
         if resp.status_code == 200:
             all_expenses = resp.json()
             # MODIFIED: Check last 30 days
@@ -242,7 +250,7 @@ def get_unsynced_data(token):
 
     # Fetch Payments
     try:
-        resp = requests.get(f"{CLOUD_API_URL}/api/pay/", headers=headers, timeout=30)
+        resp = requests.get(f"{CLOUD_API_URL}/api/pay/{branch_query}", headers=headers, timeout=30)
         if resp.status_code == 200:
             all_payments = resp.json()
             payments = [p for p in all_payments if p.get('date') and p.get('date') >= start_date_str]
@@ -253,7 +261,7 @@ def get_unsynced_data(token):
 
     # Fetch Loans (New)
     try:
-        resp = requests.get(f"{CLOUD_API_URL}/api/loans/", headers=headers, timeout=30)
+        resp = requests.get(f"{CLOUD_API_URL}/api/loans/{branch_query}", headers=headers, timeout=30)
         if resp.status_code == 200:
             all_loans = resp.json()
             # MODIFIED: Check last 30 days (filter by start_date)
