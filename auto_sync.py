@@ -23,8 +23,8 @@ import os
 
 # ===================== CONFIGURATION =====================
 CLOUD_API_URL = "https://bijouteriezaher-gestion.onrender.com/"  # Your hosted website URL
-CLOUD_EMAIL = "zied@local.com"
-CLOUD_PASSWORD = "0"
+CLOUD_EMAIL = "issam@local.com"
+CLOUD_PASSWORD = "001"
 
 LOCAL_DB_HOST = "localhost"
 LOCAL_DB_USER = "root"
@@ -84,7 +84,8 @@ def detect_local_dbs():
                 user=LOCAL_DB_USER,
                 password=opt["pass"],
                 database=opt["schema"],
-                connect_timeout=2
+                connect_timeout=2,
+                charset='latin1'
             )
             conn.close()
             print(f"[{datetime.now():%H:%M:%S}] [INFO] Detected Store: {opt['name']} (DB: {opt['schema']}) isolated for {CLOUD_EMAIL}")
