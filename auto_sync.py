@@ -23,8 +23,8 @@ import os
 
 # ===================== CONFIGURATION =====================
 CLOUD_API_URL = "https://bijouteriezaher-gestion.onrender.com/"  # Your hosted website URL
-CLOUD_EMAIL = "issam@local.com"
-CLOUD_PASSWORD = "001"
+CLOUD_EMAIL = "zied@local.com"
+CLOUD_PASSWORD = "0"
 
 LOCAL_DB_HOST = "localhost"
 LOCAL_DB_USER = "root"
@@ -60,11 +60,20 @@ def login_to_cloud():
 
 
 def detect_local_dbs():
-    """Detect ALL available store DBs (Ariana/mah1303, Nabeul/inv)."""
-    options = [
-        {"schema": "mah1303", "name": "Ariana", "pass": "6165"},
-        {"schema": "inv", "name": "Nabeul", "pass": "6165"},
-    ]
+    """Detect local databases based on configured CLOUD_EMAIL to enforce Strict Tenant Isolation."""
+    email_lower = CLOUD_EMAIL.lower()
+    
+    options = []
+    # Strictly map Email to Local Database to prevent Cross-Syncing
+    if "issam" in email_lower:
+        options.append({"schema": "mah1303", "name": "Ariana", "pass": "6165"})
+    elif "zied" in email_lower:
+        options.append({"schema": "inv", "name": "Nabeul", "pass": "6165"})
+    else:
+        print(f"[{datetime.now():%H:%M:%S}] [WARN] Unrecognized or Admin email used for local sync!")
+        print(f"[{datetime.now():%H:%M:%S}] [WARN] To prevent data mixing across stores, no local database will be modified.")
+        print(f"[{datetime.now():%H:%M:%S}] [WARN] Please use 'issam@local.com' (Ariana) or 'zied@local.com' (Nabeul).")
+        return []
     
     found_dbs = []
     
@@ -78,14 +87,14 @@ def detect_local_dbs():
                 connect_timeout=2
             )
             conn.close()
-            print(f"[{datetime.now():%H:%M:%S}] [INFO] Detected Store: {opt['name']} (DB: {opt['schema']})")
+            print(f"[{datetime.now():%H:%M:%S}] [INFO] Detected Store: {opt['name']} (DB: {opt['schema']}) isolated for {CLOUD_EMAIL}")
             found_dbs.append( (opt["schema"], opt["name"], opt["pass"]) )
-        except:
+        except Exception as e:
+            print(f"[{datetime.now():%H:%M:%S}] [ERROR] Could not connect to {opt['name']} ({opt['schema']}): {e}")
             continue
             
     if not found_dbs:
-        print(f"[{datetime.now():%H:%M:%S}] [WARN] No known database found. Defaulting to Schema: {LOCAL_DB_SCHEMA}")
-        return [(LOCAL_DB_SCHEMA, "Unknown", LOCAL_DB_PASSWORD)]
+        print(f"[{datetime.now():%H:%M:%S}] [WARN] No known database found for {CLOUD_EMAIL}.")
         
     return found_dbs
 
