@@ -190,7 +190,7 @@ async def branches_page(
         "request": request, "user": user, "app_name": APP_NAME,
         "branches": res.scalars().all(),
     }
-    return templates.TemplateResponse("branches.html", context)
+    return templates.TemplateResponse(request=request, name="branches.html", context=context)
 
 
 # --- 2. Static/Templates Setup ---
@@ -445,14 +445,14 @@ async def home(
         "user": current_user, # Pass the full user object
         "activity": activity_logs # Pass activity logs to template
     }
-    return templates.TemplateResponse("dashboard.html", context)
+    return templates.TemplateResponse(request=request, name="dashboard.html", context=context)
 
 
 @app.get("/login", response_class=HTMLResponse, name="login_page")
 async def login_page(request: Request, db: AsyncSession = Depends(get_db)):
     res = await db.execute(select(User).order_by(User.full_name))
     users = res.scalars().all()
-    return templates.TemplateResponse("login.html", {"request": request, "app_name": APP_NAME, "users": users})
+    return templates.TemplateResponse(request=request, name="login.html", context={"request": request, "app_name": APP_NAME, "users": users})
 
 
 @app.post("/login", name="login_action")
@@ -475,7 +475,7 @@ async def login_action(
             "error": "Email ou mot de passe incorrect.",
             "users": users_list # --- FIX: Pass users list to context ---
         }
-        return templates.TemplateResponse("login.html", context, status_code=status.HTTP_401_UNAUTHORIZED)
+        return templates.TemplateResponse(request=request, name="login.html", context=context, status_code=status.HTTP_401_UNAUTHORIZED)
 
     # If login is successful
     permissions_dict = _serialize_permissions(user.permissions)
@@ -532,7 +532,7 @@ async def employees_page(
         "manager_branch_id": manager_branch_id,
         "selected_branch_id": request.query_params.get("branch_id") # FIX: Pass for Admin UI state
     }
-    return templates.TemplateResponse("employees.html", context)
+    return templates.TemplateResponse(request=request, name="employees.html", context=context)
 
 
 @app.post("/employees/create", name="employees_create")
@@ -705,7 +705,7 @@ async def attendance_page(
         "selected_branch_id": request.query_params.get("branch_id"), 
         "today_date": get_tunisia_today().isoformat()
     }
-    return templates.TemplateResponse("attendance.html", context)
+    return templates.TemplateResponse(request=request, name="attendance.html", context=context)
 
 
 @app.post("/attendance/create", name="attendance_create")
@@ -836,7 +836,7 @@ async def deposits_page(
         "selected_branch_id": request.query_params.get("branch_id"), 
         "today_date": get_tunisia_today().isoformat()
     }
-    return templates.TemplateResponse("deposits.html", context)
+    return templates.TemplateResponse(request=request, name="deposits.html", context=context)
 
 
 @app.post("/deposits/create", name="deposits_create")
@@ -969,7 +969,7 @@ async def expenses_page(
         "selected_branch_id": request.query_params.get("branch_id"), 
         "today_date": get_tunisia_today().isoformat()
     }
-    return templates.TemplateResponse("expenses.html", context)
+    return templates.TemplateResponse(request=request, name="expenses.html", context=context)
 
 @app.post("/expenses/create", name="expenses_create")
 async def expenses_create(
@@ -1067,7 +1067,7 @@ async def leaves_page(
         "branches": all_branches, # Passed for Admin Selector
         "selected_branch_id": request.query_params.get("branch_id"), 
     }
-    return templates.TemplateResponse("leaves.html", context)
+    return templates.TemplateResponse(request=request, name="leaves.html", context=context)
 
 
 @app.post("/leaves/create", name="leaves_create")
@@ -1374,7 +1374,7 @@ async def employee_report_index(
         "summary_primes": summary_primes,
         "period_label": period_label # <-- DYNAMIC LABEL
     }
-    return templates.TemplateResponse("employee_report.html", context)
+    return templates.TemplateResponse(request=request, name="employee_report.html", context=context)
 
 
 # --- Payer Employé ---
@@ -1428,7 +1428,7 @@ async def pay_employee_page(
         "today_date": get_tunisia_today().isoformat(),
         "recent_payments": recent_payments # <-- NOUVEAU: Ajout au contexte
     }
-    return templates.TemplateResponse("pay_employee.html", context)
+    return templates.TemplateResponse(request=request, name="pay_employee.html", context=context)
 
 
 @app.post("/pay-employee", name="pay_employee_action")
@@ -1607,7 +1607,7 @@ async def primes_page(
             "selected_end_date": selected_end_date_iso,
             "selected_branch_id": selected_branch_id
         }
-        return templates.TemplateResponse("primes.html", context)
+        return templates.TemplateResponse(request=request, name="primes.html", context=context)
 
     # 3. Get aggregated stats for these employees for the selected date range
     
@@ -1733,7 +1733,7 @@ async def primes_page(
         "selected_end_date": selected_end_date_iso,
         "selected_branch_id": selected_branch_id
     }
-    return templates.TemplateResponse("primes.html", context)
+    return templates.TemplateResponse(request=request, name="primes.html", context=context)
 
 
 # --- NOUVEAU : Route pour attribuer les primes (remplace l'ancienne) ---
@@ -1867,7 +1867,7 @@ async def loans_page(
         "selected_branch_id": request.query_params.get("branch_id"), 
         "today_date": get_tunisia_today().isoformat()
     }
-    return templates.TemplateResponse("loans.html", context)
+    return templates.TemplateResponse(request=request, name="loans.html", context=context)
 
 
 @app.get("/roles", response_class=HTMLResponse, name="roles_page")
@@ -1884,7 +1884,7 @@ async def roles_page(
         "request": request, "user": user, "app_name": APP_NAME,
         "roles": res_roles.scalars().unique().all()
     }
-    return templates.TemplateResponse("roles.html", context)
+    return templates.TemplateResponse(request=request, name="roles.html", context=context)
 
 
 @app.post("/roles/create", name="roles_create")
@@ -1998,7 +1998,7 @@ async def users_page(
         "branches": res_branches.scalars().all(),
         "roles": res_roles.scalars().all(),
     }
-    return templates.TemplateResponse("users.html", context)
+    return templates.TemplateResponse(request=request, name="users.html", context=context)
 
 
 @app.post("/users/create", name="users_create")
@@ -2169,7 +2169,7 @@ async def settings_page(
         "request": request, "user": user, "app_name": APP_NAME,
         "logs": filtered_logs
     }
-    return templates.TemplateResponse("settings.html", context)
+    return templates.TemplateResponse(request=request, name="settings.html", context=context)
 
 
 # --- 6. Route de Nettoyage (Corrigée) ---
@@ -2528,7 +2528,7 @@ async def loans_page(request: Request, db: AsyncSession = Depends(get_db), user:
     
     today_date_iso = get_tunisia_today().isoformat()
 
-    return templates.TemplateResponse("loans.html", {
+    return templates.TemplateResponse(request=request, name="loans.html", context={
         "request": request, 
         "user": user, 
         "app_name": APP_NAME, 
@@ -2642,9 +2642,7 @@ async def loan_detail_page(
 
     today_date = get_tunisia_today().isoformat()
 
-    return templates.TemplateResponse(
-        "loan_detail.html",
-        {
+    return templates.TemplateResponse(request=request, name="loan_detail.html", context={
             "request": request,
             "user": user,
             "app_name": APP_NAME,
